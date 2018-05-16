@@ -1,9 +1,12 @@
-import React , { Component } from 'react';
+import React, { Component } from 'react';
 
 
 import Aux from '../../auxilary/Auxilary';
 import Burger from '../../components/Burger/Burger';
 import BuildControls from '../../components/Burger/BuildControls/BuildControls'
+import Modal from '../../components/UI/Modal/Modal';
+import OrderSummary from '../../components/Burger/OrderSummary/OrderSummary';
+
 
 const INGREDIENTS_PRICES = {
     salad: 0.5,
@@ -24,69 +27,74 @@ class BurgerBuilder extends Component {
         purchasable: false
     }
 
-updatePurchaseState(ingredients) {
+    updatePurchaseState(ingredients) {
 
-    const sum = Object.keys(ingredients).map(igKey => {
-        return ingredients[igKey];
-    }).reduce((sum , el) => {
-        return sum + el;
-    }, 0);
-    this.setState({purchasable: sum > 0})
-}
+        const sum = Object.keys(ingredients).map(igKey => {
+            return ingredients[igKey];
+        }).reduce((sum, el) => {
+            return sum + el;
+        }, 0);
+        this.setState({ purchasable: sum > 0 })
+    }
 
-addIngredientHandler = (type) => {
-    const oldCount = this.state.ingredients[type]; // I need to know old ingredient count is
-    const updatedCount = oldCount + 1; //
-    const updatedIngredients = {
-        ...this.state.ingredients
+    addIngredientHandler = (type) => {
+        const oldCount = this.state.ingredients[type]; // I need to know old ingredient count is
+        const updatedCount = oldCount + 1; //
+        const updatedIngredients = {
+            ...this.state.ingredients
+        }
+        updatedIngredients[type] = updatedCount;
+        console.log('updatedIngredients', updatedIngredients);
+        const priceAddition = INGREDIENTS_PRICES[type];
+        const oldPrice = this.state.totalPrice;
+        const newPrice = oldPrice + priceAddition;
+        this.setState({
+            totalPrice: newPrice,
+            ingredients: updatedIngredients
+        })
+        this.updatePurchaseState(updatedIngredients);
     }
-    updatedIngredients[type] = updatedCount;
-    const priceAddition = INGREDIENTS_PRICES[type];
-    const oldPrice = this.state.totalPrice;
-    const newPrice = oldPrice+priceAddition;
-    this.setState({
-        totalPrice: newPrice,
-        ingredients: updatedIngredients
-    })
-    this.updatePurchaseState(updatedIngredients);
-}
 
-removeIngredientHandler =(type) => {
-    const oldCount = this.state.ingredients[type]; // I need to know old ingredient count is for now
-    if(oldCount <= 0) {
-        return;
+    removeIngredientHandler = (type) => {
+        const oldCount = this.state.ingredients[type];
+        if (oldCount <= 0) {
+            return;
+        }
+        const updatedCount = oldCount - 1;
+        const updatedIngredients = {
+            ...this.state.ingredients
+        }
+        updatedIngredients[type] = updatedCount;
+        const priceDeduction = INGREDIENTS_PRICES[type];
+        const oldPrice = this.state.totalPrice;
+        const newPrice = oldPrice - priceDeduction;
+        this.setState({
+            totalPrice: newPrice,
+            ingredients: updatedIngredients
+        });
+        this.updatePurchaseState(updatedIngredients);
     }
-    const updatedCount = oldCount - 1; //
-    const updatedIngredients = {
-        ...this.state.ingredients
-    }
-    updatedIngredients[type] = updatedCount;
-    const priceDeduction = INGREDIENTS_PRICES[type];
-    const oldPrice = this.state.totalPrice;
-    const newPrice = oldPrice - priceDeduction;
-    this.setState({
-        totalPrice: newPrice,
-        ingredients: updatedIngredients
-    });
-    this.updatePurchaseState(updatedIngredients);
-}
 
     render() {
         const disabledInfo = {
             ...this.state.ingredients
         };
-        for(let key in disabledInfo) {
+        for (let key in disabledInfo) {
             disabledInfo[key] = disabledInfo[key] <= 0
+            console.log(key, disabledInfo[key]);
         }
         return (
             <Aux>
-                <Burger ingredients = {this.state.ingredients}/>
-                <BuildControls
+                <Modal>
+                    <OrderSummary ingredients = {this.state.ingredients} />
+                </Modal>
+                <Burger ingredients={this.state.ingredients} />
+                <BuildControls 
                     ingredientAdded={this.addIngredientHandler}
                     ingredientRemoved={this.removeIngredientHandler}
                     disabled={disabledInfo}
                     purchasable={this.state.purchasable}
-                    price={this.state.totalPrice}/>
+                    price={this.state.totalPrice} />
             </Aux>
         );
     }
